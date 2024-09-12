@@ -1,8 +1,8 @@
 #include <raylib.h>
 #include <stdio.h>
 
-#define W_WIDTH 800 //window width
-#define W_HEIGHT 800 //window height
+#define W_WIDTH 1000 //window width
+#define W_HEIGHT 1000 //window height
 #define W_TITLE "Flappy Bird" //window title
 #define W_BACKGROUND (Color){0x19, 0x19, 0x19, 0xFF} //background color
 #define GRAVITY 3000 //bird gravity
@@ -58,11 +58,19 @@ int gameFrame();
 int main(int argc, char *argv[]) {
 	InitWindow(W_WIDTH, W_HEIGHT, W_TITLE);
 	SetTargetFPS(W_FPS);
-	b = createBird(50);
-	p = createPipe(50, 300);
-
+	int stdWidth = (int)(W_WIDTH / 20);
+	int pipeGap = (int)(W_HEIGHT / 3);
+	b = createBird(stdWidth);
+	p = createPipe(stdWidth, pipeGap);
+	int running = 0;
+	
 	while (!WindowShouldClose()) {
-		if (gameFrame()) break;
+		int ret = gameFrame(running);
+		if (ret == 1) {
+			break;
+		} else if (ret == 2) {
+			running = 1;
+		}
 	}
 
 	CloseWindow();
@@ -165,22 +173,26 @@ int checkCollision(bird b, pipe p) {
 	return 0;
 }
 
-int gameFrame() {
+int gameFrame(int running) {
 	int gameOver = 0;
 	char scoreText[16]; //buffer for sprintf
 	sprintf(scoreText, "Score: %d", score); //convert score to string
 	BeginDrawing();
 	ClearBackground(W_BACKGROUND);
 	
-	if (IsKeyReleased(KEY_SPACE)) jump(&b);
-		
-	if (moveBird(&b)) gameOver = 1;
-	if (movePipe(&p)) score++;
-	if (checkCollision(b, p)) gameOver = 1;
-	
+	if (IsKeyReleased(KEY_SPACE)) {
+		jump(&b);
+		if (running == 0) return 2;
+	}
+	if (running == 1) {	
+		if (moveBird(&b)) gameOver = 1;
+		if (movePipe(&p)) score++;
+		if (checkCollision(b, p)) gameOver = 1;
+	}
 	drawPipe(p);
 	drawBird(b);
 	DrawText(scoreText, 5, 5, 20, T_COLOR);
 	EndDrawing();
 	return gameOver;
 }
+
